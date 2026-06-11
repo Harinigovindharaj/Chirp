@@ -1,0 +1,23 @@
+{% extends "base.html" %}
+{% block title %}Connections · Chirp{% endblock %}
+{% block content %}
+<h2 class="page-title">👥 Your Connections</h2>
+{% if users %}
+  <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:1rem;">
+    {% for u in users %}
+    <div class="card" style="display:flex;flex-direction:column;align-items:center;gap:0.5rem;text-align:center;padding:1.25rem;">
+      <a href="{{ url_for('tweets.profile', username=u.username) }}">
+        <div class="avatar avatar-lg">{{ u.username[0]|upper }}</div>
+      </a>
+      <a href="{{ url_for('tweets.profile', username=u.username) }}" class="u-name">@{{ u.username }}</a>
+      <p class="muted" style="margin:0;font-size:0.8rem">Joined {{ u.created_at.strftime('%b %Y') }}</p>
+      <a href="{{ url_for('chat.thread', username=u.username) }}" class="btn btn-primary btn-sm" style="width:100%">
+        💬 Message
+      </a>
+    </div>
+    {% endfor %}
+  </div>
+{% else %}
+  <div class="card"><p class="muted">You have no connections yet. Visit someone's profile to connect!</p></div>
+{% endif %}
+{% endblock %}

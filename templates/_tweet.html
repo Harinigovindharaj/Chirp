@@ -1,0 +1,15 @@
+<article class="tweet card {% if t.is_abusive %}tweet-abusive{% endif %}">
+  <div class="avatar">{{ t.author.username[0]|upper }}</div>
+  <div class="tweet-body">
+    <div class="tweet-head">
+      <a href="{{ url_for('tweets.profile', username=t.author.username) }}" class="u-name">@{{ t.author.username }}</a>
+      <span class="muted">· {{ t.created_at.strftime('%b %d, %Y %H:%M') }}</span>
+      {% if t.prediction %}
+        <span class="badge badge-{{ t.prediction }}">
+          {{ t.prediction }} · {{ (t.confidence_score * 100)|round(0)|int }}%
+        </span>
+      {% endif %}
+    </div>
+    <p class="tweet-content">{{ t.content }}</p>
+  </div>
+</article>

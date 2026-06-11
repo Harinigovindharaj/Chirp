@@ -1,0 +1,112 @@
+{% extends "base.html" %}
+{% block title %}Admin Dashboard · Chirp{% endblock %}
+{% block content %}
+<h2 class="page-title">🛡️ Admin Dashboard</h2>
+
+{# ── Users ────────────────────────────────────────────────────────────────── #}
+<section class="card">
+  <h3>Users ({{ users|length }})</h3>
+  <table class="table">
+    <thead>
+      <tr><th>Username</th><th>Email</th><th>Status</th><th>Abuse</th><th>Warnings</th><th>Actions</th></tr>
+    </thead>
+    <tbody>
+    {% for u in users %}
+      <tr>
+        <td>@{{ u.username }} {% if u.is_admin %}<span class="badge">admin</span>{% endif %}</td>
+        <td>{{ u.email }}</td>
+        <td><span class="u-status status-{{ u.account_status }}">{{ u.account_status.replace('_',' ') }}</span></td>
+        <td>{{ u.abuse_score }}</td>
+        <td>{{ u.warning_count }}</td>
+        <td class="actions">
+          <form method="post" action="{{ url_for('admin.reset_score', user_id=u.id) }}">
+            <button class="btn btn-sm">Reset</button>
+          </form>
+          <form method="post" action="{{ url_for('admin.unblock', user_id=u.id) }}">
+            <button class="btn btn-sm btn-primary">Unblock</button>
+          </form>
+        </td>
+      </tr>
+    {% endfor %}
+    </tbody>
+  </table>
+</section>
+
+{# ── Reported messages ────────────────────────────────────────────────────── #}
+<section class="card">
+  <h3>⚑ Reported Messages ({{ reports|length }} unresolved)</h3>
+  {% if reports %}
+  <table class="table">
+    <thead>
+      <tr><th>Reporter</th><th>Sender</th><th>Message</th><th>Reason</th><th>NLP</th><th>Date</th><th>Action</th></tr>
+    </thead>
+    <tbody>
+    {% for r in reports %}
+      <tr>
+        <td>@{{ r.reporter.username }}</td>
+        <td>@{{ r.message.sender.username }}</td>
+        <td style="max-width:200px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">{{ r.message.content }}</td>
+        <td>{{ r.reason or '—' }}</td>
+        <td>
+          <span class="badge badge-{{ r.message.prediction or 'non_abusive' }}">
+            {{ r.message.prediction or 'n/a' }}
+            {% if r.message.confidence_score %}· {{ (r.message.confidence_score * 100)|round(0)|int }}%{% endif %}
+          </span>
+        </td>
+        <td class="muted">{{ r.created_at.strftime('%b %d') }}</td>
+        <td>
+          <form method="post" action="{{ url_for('admin.resolve_report', report_id=r.id) }}">
+            <button class="btn btn-sm btn-primary">Resolve</button>
+          </form>
+        </td>
+      </tr>
+    {% endfor %}
+    </tbody>
+  </table>
+  {% else %}
+    <p class="muted">No unresolved reports.</p>
+  {% endif %}
+</section>
+
+{# ── Abusive messages ─────────────────────────────────────────────────────── #}
+<section class="card">
+  <h3>🚫 Abusive Chat Messages ({{ abusive_msgs|length }})</h3>
+  {% if abusive_msgs %}
+  <table class="table">
+    <thead><tr><th>From</th><th>To</th><th>Message</th><th>Score</th><th>Time</th></tr></thead>
+    <tbody>
+    {% for m in abusive_msgs %}
+      <tr style="background:#fef2f2">
+        <td>@{{ m.sender.username }}</td>
+        <td>@{{ m.receiver.username }}</td>
+        <td style="max-width:280px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">{{ m.content }}</td>
+        <td><span class="badge badge-abusive">{{ (m.confidence_score * 100)|round(0)|int }}%</span></td>
+        <td class="muted">{{ m.created_at.strftime('%b %d, %H:%M') }}</td>
+      </tr>
+    {% endfor %}
+    </tbody>
+  </table>
+  {% else %}
+    <p class="muted">No abusive messages flagged.</p>
+  {% endif %}
+</section>
+
+{# ── Abusive tweets ───────────────────────────────────────────────────────── #}
+<section class="card">
+  <h3>Abusive Tweets ({{ abusive_tweets|length }})</h3>
+  <div class="feed">
+    {% for t in abusive_tweets %}{% include "_tweet.html" %}
+    {% else %}<p class="muted">None flagged.</p>{% endfor %}
+  </div>
+</section>
+
+{# ── Blocked / Banned ─────────────────────────────────────────────────────── #}
+<section class="card">
+  <h3>Blocked ({{ blocked|length }}) & Banned ({{ banned|length }})</h3>
+  <ul>
+    {% for u in blocked %}<li>⛔ @{{ u.username }} — temporarily blocked</li>{% endfor %}
+    {% for u in banned %}<li>🚫 @{{ u.username }} — permanently banned</li>{% endfor %}
+    {% if not blocked and not banned %}<li class="muted">None.</li>{% endif %}
+  </ul>
+</section>
+{% endblock %}

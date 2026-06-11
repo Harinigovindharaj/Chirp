@@ -1,0 +1,56 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="profile-card card">
+  <div class="avatar avatar-lg">{{ profile_user.username[0]|upper }}</div>
+  <div style="flex:1">
+    <h2 style="margin:0">@{{ profile_user.username }}</h2>
+    <p class="muted">Joined {{ profile_user.created_at.strftime('%B %Y') }}</p>
+    <div class="stats">
+      <span><strong>{{ profile_user.connections|length }}</strong> connections</span>
+      {% if not profile_user.is_admin %}
+        <span class="u-status status-{{ profile_user.account_status }}">
+          {{ profile_user.account_status.replace('_', ' ') }}
+        </span>
+      {% endif %}
+    </div>
+
+    {# ── Connection actions (only on other people's profiles) ── #}
+    {% if profile_user.id != current_user.id %}
+      {% set status = current_user.connection_status_with(profile_user) %}
+      <div style="margin-top:0.75rem; display:flex; gap:0.5rem; flex-wrap:wrap;">
+        {% if status == 'accepted' %}
+          <span class="badge" style="background:#d1fae5;color:#059669;padding:0.4rem 1rem">✓ Connected</span>
+          <a href="{{ url_for('chat.thread', username=profile_user.username) }}" class="btn btn-primary btn-sm">💬 Message</a>
+        {% elif status == 'pending' %}
+          <span class="badge" style="background:#fef3c7;color:#b45309;padding:0.4rem 1rem">⏳ Request Pending</span>
+        {% elif current_user.pending_request_from(profile_user) %}
+          {# They sent us a request — show accept/reject inline #}
+          {% for req in current_user.pending_incoming %}
+            {% if req.requester_id == profile_user.id %}
+              <form method="post" action="{{ url_for('connections.accept', conn_id=req.id) }}">
+                <button class="btn btn-primary btn-sm">✓ Accept Request</button>
+              </form>
+              <form method="post" action="{{ url_for('connections.reject', conn_id=req.id) }}">
+                <button class="btn btn-sm">✗ Decline</button>
+              </form>
+            {% endif %}
+          {% endfor %}
+        {% else %}
+          <form method="post" action="{{ url_for('connections.send_request', user_id=profile_user.id) }}">
+            <button class="btn btn-primary btn-sm">+ Connect</button>
+          </form>
+        {% endif %}
+      </div>
+    {% endif %}
+  </div>
+</div>
+
+<h3 class="page-title">Tweets</h3>
+<div class="feed">
+  {% for t in tweets %}
+    {% include "_tweet.html" %}
+  {% else %}
+    <p class="muted">No tweets yet.</p>
+  {% endfor %}
+</div>
+{% endblock %}

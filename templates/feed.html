@@ -1,0 +1,28 @@
+{% extends "base.html" %}
+{% block content %}
+<h2 class="page-title">Home</h2>
+
+<div class="composer card">
+  {% if current_user.can_post %}
+  <form method="post" action="{{ url_for('tweets.create') }}">
+    <textarea name="content" maxlength="280" placeholder="What's happening?" required></textarea>
+    <div class="composer-row">
+      <span class="muted" id="char-count">0/280</span>
+      <button class="btn btn-primary" type="submit">Chirp</button>
+    </div>
+  </form>
+  {% else %}
+    <div class="blocked-notice">
+      🚫 {{ current_user.post_block_reason }}
+    </div>
+  {% endif %}
+</div>
+
+<div class="feed">
+  {% for t in tweets %}
+    {% include "_tweet.html" %}
+  {% else %}
+    <p class="muted">No tweets yet. Be the first!</p>
+  {% endfor %}
+</div>
+{% endblock %}

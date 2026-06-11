@@ -1,0 +1,29 @@
+{% extends "base.html" %}
+{% block title %}Messages · Chirp{% endblock %}
+{% block content %}
+<h2 class="page-title">💬 Messages</h2>
+{% if conversations %}
+  <div class="feed">
+    {% for c in conversations %}
+    <a href="{{ url_for('chat.thread', username=c.partner.username) }}" class="conversation-row card {% if c.unread %}conversation-unread{% endif %}">
+      <div class="avatar">{{ c.partner.username[0]|upper }}</div>
+      <div class="conversation-body">
+        <div class="conversation-head">
+          <span class="u-name">@{{ c.partner.username }}</span>
+          <span class="muted" style="font-size:0.8rem">{{ c.last_msg.created_at.strftime('%b %d, %H:%M') }}</span>
+          {% if c.unread %}<span class="unread-dot">{{ c.unread }}</span>{% endif %}
+        </div>
+        <p class="conversation-preview {% if c.last_msg.is_abusive %}preview-abusive{% endif %}">
+          {% if c.last_msg.sender_id == current_user.id %}You: {% endif %}
+          {{ c.last_msg.content[:80] }}{% if c.last_msg.content|length > 80 %}…{% endif %}
+        </p>
+      </div>
+    </a>
+    {% endfor %}
+  </div>
+{% else %}
+  <div class="card">
+    <p class="muted">No messages yet. Go to your <a href="{{ url_for('connections.list_connections') }}">connections</a> and start a chat!</p>
+  </div>
+{% endif %}
+{% endblock %}

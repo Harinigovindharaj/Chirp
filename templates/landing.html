@@ -1,0 +1,11 @@
+{% extends "base.html" %}
+{% block content %}
+<section class="landing">
+  <h1>🐦 Chirp</h1>
+  <p class="tagline">A mini Twitter clone — built for NLP-based abusive content detection research.</p>
+  <div class="cta">
+    <a class="btn btn-primary" href="{{ url_for('auth.register') }}">Create account</a>
+    <a class="btn btn-ghost" href="{{ url_for('auth.login') }}">Log in</a>
+  </div>
+</section>
+{% endblock %}

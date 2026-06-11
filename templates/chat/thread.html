@@ -1,0 +1,105 @@
+{% extends "base.html" %}
+{% block title %}Chat with @{{ partner.username }} · Chirp{% endblock %}
+{% block content %}
+<div class="chat-header card">
+  <a href="{{ url_for('tweets.profile', username=partner.username) }}">
+    <div class="avatar">{{ partner.username[0]|upper }}</div>
+  </a>
+  <div>
+    <a href="{{ url_for('tweets.profile', username=partner.username) }}" class="u-name">@{{ partner.username }}</a>
+    <div class="muted" style="font-size:0.8rem">Direct Message</div>
+  </div>
+</div>
+
+<div class="chat-window" id="chat-window">
+  {% if messages %}
+    {% for msg in messages %}
+    <div class="bubble-wrap {% if msg.sender_id == current_user.id %}bubble-mine{% else %}bubble-theirs{% endif %}">
+      <div class="bubble {% if msg.is_abusive %}bubble-abusive{% endif %}">
+        <p class="bubble-text">{{ msg.content }}</p>
+        <div class="bubble-meta">
+          <span>{{ msg.created_at.strftime('%H:%M') }}</span>
+          {% if msg.prediction %}
+            <span class="badge badge-{{ msg.prediction }}" style="font-size:0.65rem">
+              {{ msg.prediction }} · {{ (msg.confidence_score * 100)|round(0)|int }}%
+            </span>
+          {% endif %}
+          {# Report button — only for received messages #}
+          {% if msg.receiver_id == current_user.id %}
+          <button class="report-btn" onclick="openReport({{ msg.id }})" title="Report this message">⚑</button>
+          {% endif %}
+        </div>
+      </div>
+    </div>
+    {% endfor %}
+  {% else %}
+    <p class="muted" style="text-align:center;padding:2rem 0">No messages yet. Say hello!</p>
+  {% endif %}
+</div>
+
+{# ── Report modal ─────────────────────────────────────────────────────────── #}
+<div id="report-modal" class="modal-backdrop" style="display:none">
+  <div class="modal-box card">
+    <h3 style="margin-top:0">⚑ Report Message</h3>
+    <p class="muted">Describe why you're reporting this message (optional).</p>
+    <form id="report-form" method="post" action="">
+      <textarea name="reason" maxlength="300" placeholder="e.g. Harassment, threats, hate speech…"
+        style="width:100%;border:1px solid var(--border);border-radius:8px;padding:0.5rem;font-family:inherit;resize:vertical;min-height:80px"></textarea>
+      <div style="display:flex;gap:0.5rem;margin-top:0.75rem;justify-content:flex-end">
+        <button type="button" class="btn" onclick="closeReport()">Cancel</button>
+        <button type="submit" class="btn btn-primary">Submit Report</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+{# ── Composer ─────────────────────────────────────────────────────────────── #}
+{% if current_user.can_post %}
+<div class="chat-composer card">
+  <form method="post" id="chat-form">
+    <div class="chat-input-row">
+      <textarea name="content" id="chat-input" maxlength="1000"
+        placeholder="Type a message…" rows="1" required></textarea>
+      <button class="btn btn-primary" type="submit">Send</button>
+    </div>
+    <div style="text-align:right">
+      <span class="muted" id="msg-char-count" style="font-size:0.8rem">0/1000</span>
+    </div>
+  </form>
+</div>
+{% else %}
+<div class="blocked-notice">🚫 {{ current_user.post_block_reason }}</div>
+{% endif %}
+
+<script>
+  // Auto-scroll chat to bottom
+  const win = document.getElementById("chat-window");
+  if (win) win.scrollTop = win.scrollHeight;
+
+  // Char counter for message composer
+  const inp = document.getElementById("chat-input");
+  const cnt = document.getElementById("msg-char-count");
+  if (inp && cnt) {
+    inp.addEventListener("input", () => {
+      cnt.textContent = inp.value.length + "/1000";
+      cnt.style.color = inp.value.length > 950 ? "#f4212e" : "";
+      // Auto-grow textarea
+      inp.style.height = "auto";
+      inp.style.height = Math.min(inp.scrollHeight, 120) + "px";
+    });
+  }
+
+  // Report modal
+  function openReport(msgId) {
+    const form = document.getElementById("report-form");
+    form.action = "/chat/report/" + msgId;
+    document.getElementById("report-modal").style.display = "flex";
+  }
+  function closeReport() {
+    document.getElementById("report-modal").style.display = "none";
+  }
+  document.getElementById("report-modal").addEventListener("click", function(e) {
+    if (e.target === this) closeReport();
+  });
+</script>
+{% endblock %}

@@ -1,0 +1,64 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>{% block title %}Chirp · Mini Twitter{% endblock %}</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}" />
+</head>
+<body>
+  <div class="app">
+    {% if current_user.is_authenticated %}
+    <aside class="sidebar">
+      <div class="brand">🐦 Chirp</div>
+      <nav>
+        <a href="{{ url_for('tweets.feed') }}">🏠 Home</a>
+        <a href="{{ url_for('tweets.profile') }}">👤 Profile</a>
+        <a href="{{ url_for('connections.list_connections') }}">👥 Connections
+          {% if current_user.pending_incoming|length > 0 %}
+            <span class="nav-badge">{{ current_user.pending_incoming|length }}</span>
+          {% endif %}
+        </a>
+        <a href="{{ url_for('connections.requests') }}">🔔 Requests
+          {% if current_user.pending_incoming|length > 0 %}
+            <span class="nav-badge">{{ current_user.pending_incoming|length }}</span>
+          {% endif %}
+        </a>
+        <a href="{{ url_for('chat.inbox') }}">💬 Messages
+          {% if current_user.unread_message_count > 0 %}
+            <span class="nav-badge">{{ current_user.unread_message_count }}</span>
+          {% endif %}
+        </a>
+        {% if current_user.is_admin %}
+          <a href="{{ url_for('admin.dashboard') }}">🛡️ Admin</a>
+        {% endif %}
+        <a href="{{ url_for('auth.logout') }}">🚪 Logout</a>
+      </nav>
+      <div class="user-mini">
+        <div class="avatar">{{ current_user.username[0]|upper }}</div>
+        <div>
+          <div class="u-name">@{{ current_user.username }}</div>
+          <div class="u-status status-{{ current_user.account_status }}">
+            {{ current_user.account_status.replace('_', ' ') }}
+          </div>
+        </div>
+      </div>
+    </aside>
+    {% endif %}
+
+    <main class="content">
+      {% with messages = get_flashed_messages(with_categories=true) %}
+        {% if messages %}
+          <div class="flashes">
+            {% for category, msg in messages %}
+              <div class="flash flash-{{ category }}">{{ msg }}</div>
+            {% endfor %}
+          </div>
+        {% endif %}
+      {% endwith %}
+      {% block content %}{% endblock %}
+    </main>
+  </div>
+  <script src="{{ url_for('static', filename='js/main.js') }}"></script>
+</body>
+</html>
